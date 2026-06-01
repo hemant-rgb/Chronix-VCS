@@ -1,0 +1,4 @@
+used yargs : for terminal inputs and creating commands 
+used fs module : a node js package allows to interact with system files 
+
+supabase pass : YH-SC.CbU6yLSws

@@ -1,27 +1,226 @@
-const createRepository = (req,res)=>{
-    res.send("repo created");
+const mongoose = require("mongoose");
+const Repository = require("../models/repoModel.js");
+const User = require("../models/userModel.js");
+const Issue = require("../models/issueModel.js");
+
+
+
+
+
+
+async function createRepository(req, res) {
+    const { owner, name, issues, content, description, visibility } = req.body;
+
+    try {
+        if (!name) {
+            return res.status(400).send("Repository's user name is required !");
+        }
+        if (!mongoose.Types.ObjectId.isValid(owner)) {
+            return res.status(400).send("User Id is required!");
+        }
+        const newRepo = new Repository({
+            name,
+            description,
+            owner,
+            content,
+            toggleVisibilityRepoById,
+            issues,
+        });
+
+        const result = await newRepo.save();
+        res.status(201).json({
+            message: "Repository Created !",
+            repoId: result._id
+        })
+
+    } catch (err) {
+        console.error("Error during creation of Repository : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
-const getAllRepository = (req,res)=>{
-    res.send("all repo");
+
+
+
+
+async function getAllRepository(req, res) {
+    try {
+        const repositories = await Repository.find({}).populate("owner").populate("issues");
+        // populate -> since mongoDB stores only references to User and Issue model , populate tells it to fetch the actual data from these refernces 
+        // owner -> User model
+        // issues -> Issue model
+        if (!repositories || repositories.length == 0) {
+            return res.status(404).send("Repos not Found");
+        }
+
+        res.json({ message: "repositories found !", repositories });
+
+    } catch (err) {
+        console.error("Error during fetching of Repositories : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
-const fetchRepoById = (req,res)=>{
-    res.send("repo fetched by id");
+
+
+
+
+async function fetchRepoById(req, res) {
+    const repoId = req.params.id;
+    try {
+        if (!repoId) {
+            return res.status(400).send("Invalid RepoId");
+        }
+        const repo = await Repository.findById(repoId).populate("owner").populate("issues");
+        if (!repo) {
+            return res.status(404)
+                .send("Repository Not Found");
+        }
+        res.json(repo);
+    } catch (err) {
+        console.error("Error during fetching of Repository by Id : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
-const fetchRepoByName = (req,res)=>{
-    res.send("repo fetched by name");
+
+
+
+
+async function fetchRepoByName(req, res) {
+    const repoName = req.params.name;
+    try {
+        if (!repoName) {
+            return res.status(400).send("Invalid RepoName");
+        }
+        const repo = await Repository.findOne({ name: repoName }).populate("owner").populate("issues");
+        if (!repo) {
+            return res.status(404)
+                .send("Repository Not Found");
+        }
+        res.json(repo);
+    } catch (err) {
+        console.error("Error during fetching of Repository by Name : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
-const fetchRepoForCurrentUser=(req,res)=>{
-    res.send("all user repo");
+
+
+
+
+
+async function fetchRepoForCurrentUser(req, res) {
+    const userId = req.user;
+    try {
+        if (!userId) {
+            return res.status(400).send("userId not found");
+        }
+        const repositories = await Repository.find({ owner: userId }).populate("owner").populate("issues");
+        if (!repositories || repositories.length == 0) {
+            return res.status(404).send("Repositories not Found");
+        }
+
+        res.json(repositories);
+    } catch (err) {
+        console.error("Error during fetching of Repository by Name : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
-const updateRepositoryById = (req,res)=>{
-    res.send("repo updated");
+
+
+
+
+
+async function updateRepositoryById(req, res) {
+    const repoId = req.params.id;
+    const { content, description } = req.body;
+    try {
+        if (!repoId) {
+            return res.status(400).send("Invalid RepoId");
+        }
+
+        const repository = await Repository.findById(repoId);
+        if (!repository) {
+            return res.status(404)
+                .send("Repository Not Found");
+        }
+        // adding new content
+        if (content) {
+            repository.content.push(content);
+        }
+
+        //over write the old description
+        if (description) {
+            repository.description =
+                description;
+        }
+        const updatedRepo = await repository.save();
+        res.json({
+            message: "repository updated",
+            repository: updatedRepo,
+        });
+    } catch (err) {
+        console.error("Error during updating repository : ", err.message);
+        res.status(500).send("Server Error !");
+    }
+
 }
-const deleteRepositoryById = (req,res)=>{
-    res.send("repo deleted");
+
+
+
+
+
+async function deleteRepositoryById(req, res) {
+    const repoId = req.params.id;
+    
+    try {
+        if (!repoId) {
+            return res.status(400).send("Invalid RepoId");
+        }
+
+        const repository = await Repository.findByIdAndDelete(repoId);
+        if (!repository) {
+            return res.status(404)
+                .send("Repository Not Found");
+        }
+    
+       
+        res.json({
+            message: "repository deleted successfully"
+        });
+    } catch (err) {
+        console.error("Error during deleting repository : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
-const toggleVisibilityRepoById = (req,res)=>{
-    res.send("repo visibility");
+
+
+
+
+
+async function toggleVisibilityRepoById(req, res) {
+    const repoId = req.params.id;
+    
+    try {
+        if (!repoId) {
+            return res.status(400).send("Invalid RepoId");
+        }
+
+        const repository = await Repository.findById(repoId);
+        if (!repository) {
+            return res.status(404)
+                .send("Repository Not Found");
+        }
+        repository.visibility = ! repository.visibility ;
+        const updatedRepo = await repository.save();
+        res.json({
+            message: "visibility changed",
+            repository: updatedRepo,
+        });
+    } catch (err) {
+        console.error("Error during changing visibility of  repository : ", err.message);
+        res.status(500).send("Server Error !");
+    }
 }
+
+
 
 module.exports = {
     createRepository,
@@ -32,6 +231,6 @@ module.exports = {
     updateRepositoryById,
     deleteRepositoryById,
     toggleVisibilityRepoById,
-    
+
 
 }

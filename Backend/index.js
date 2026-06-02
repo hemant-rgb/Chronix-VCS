@@ -2,12 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-const bodyParser = require("body-parser");
 const http = require("http");
 const { Server } = require("socket.io");
-
-
-
 
 
 
@@ -81,7 +77,7 @@ yargs(hideBin(process.argv))
 function startServer() {
     const app = express();
     const port = process.env.PORT || 3000;
-    app.use(bodyParser.json());
+  
     app.use(express.json());
 
     const mongoURI = process.env.MONGODB_URI;
@@ -101,7 +97,7 @@ function startServer() {
     const io = new Server(httpServer,{         // socket allowing all to perform get and post requests
         cors:{    
             origin: "*",
-            method : ["GET","POST"],
+            methods : ["GET","POST"],
         },
     });
 

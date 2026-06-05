@@ -1,22 +1,25 @@
 import React from 'react';
 
 import {useNavigate, useRoutes} from 'react-router-dom';
+import { useEffect } from 'react';
 
 import Dashboard from './components/dashboard/Dashboard';
 import Profile from './components/user/Profile';
 import Login from './components/auth/Login';
 import Signup from './components/auth/SignUp';
-import { useAuth } from './authContext';
+import CreateRepository from './components/repo/CreateRepository';
+import RepositoryPage from './components/repo/RepositoryPage';
+import { useAuth } from './AuthContext.jsx';
 
 const ProjectRoutes = ()=>{
-    const {currentUser, setcurrentUser} = useAuth();
+    const {currentUser, setCurrentUser} = useAuth();
     const navigate = useNavigate();
 
     useEffect(()=>{
         const userIdFromStorage = localStorage.getItem("userId");
 
         if(userIdFromStorage && !currentUser){
-            setcurrentUser(userIdFromStorage);
+            setCurrentUser(userIdFromStorage);
         }
 
         if(!userIdFromStorage && !["/auth","/signup"].includes(window.location.pathname)){
@@ -25,7 +28,7 @@ const ProjectRoutes = ()=>{
         if(userIdFromStorage && window.location.pathname =="/auth"){
             navigate("/");
         }
-    },[currentUser,navigate,setcurrentUser]);
+    },[currentUser,navigate,setCurrentUser]);
 
     let element = useRoutes([
         {
@@ -41,9 +44,18 @@ const ProjectRoutes = ()=>{
             element:<Signup/>
         },
         {
-            path:"/profile",
+            path:"/profile/:id",
             element:<Profile/>
+        },
+        {
+            path:"/repo/create",
+            element:<CreateRepository/>
+        },{
+            path:"/repo/:id",
+            element : <RepositoryPage/>
         }
+        
+
       
     ])
 

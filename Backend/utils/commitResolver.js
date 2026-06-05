@@ -4,6 +4,7 @@ const path = require("path");
 const headPath = path.join(process.cwd(), ".chronix", "HEAD");
 
 async function resolveCommitId(target) {
+    
 
     const commitsPath = path.join(
         process.cwd(),
@@ -61,6 +62,7 @@ async function resolveCommitId(target) {
                     headPath,
                     "utf-8"
                 );
+            
 
             return headCommitId.trim();    
 

@@ -7,8 +7,28 @@ const { uploadRecursive } = require("../utils/uploadRecursive.js");
 async function pushRepo() {
   const repoPath = path.resolve(process.cwd(), ".chronix");
   const commitsPath = path.join(repoPath, "commits");
+  const configPath = path.join(
+    repoPath,
+    "config.json"
+  );
+
+  const config = JSON.parse(
+    await fs.readFile(
+      configPath,
+      "utf-8"
+    )
+  );
+
+  const repoId = config.repoId;
 
   try {
+
+    if (!repoId) {
+      console.log(
+        "Repository is not linked to a remote repository."
+      );
+      return;
+    }
     const commitDirs = await fs.readdir(commitsPath);
 
     if (commitDirs.length === 0) {
@@ -23,12 +43,27 @@ async function pushRepo() {
         commitPath,
 
         path.posix.join(
+          repoId,
           "commits",
           commitDir
         )
       );
-      
+
     }
+    // adding HEAD for tracking latest commit and so that we can clone latest commit
+    const headPath = path.join(
+      repoPath,
+      "HEAD"
+    );
+
+    await uploadRecursive(
+      headPath,
+
+      path.posix.join(
+        repoId,
+        "HEAD"
+      )
+    );
 
     console.log("Push completed");
 

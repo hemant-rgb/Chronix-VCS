@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const Repository = require("../models/repoModel.js");
 const User = require("../models/userModel.js");
 const Issue = require("../models/issueModel.js");
+const supabase =
+    require("../config/supabase-config");
 
 
 
@@ -23,11 +25,23 @@ async function createRepository(req, res) {
             description,
             owner,
             content,
-            toggleVisibilityRepoById,
+            visibility,
             issues,
         });
 
         const result = await newRepo.save();
+        await User.findByIdAndUpdate(owner, { $push: { repository: result._id } });
+        const repoId = result._id.toString();
+
+        await supabase.storage
+            .from("chronixBucket")
+            .upload(
+                `${repoId}/HEAD`,
+                Buffer.from(""),
+                {
+                    upsert: true
+                }
+            );
         res.status(201).json({
             message: "Repository Created !",
             repoId: result._id
@@ -48,9 +62,6 @@ async function getAllRepository(req, res) {
         // populate -> since mongoDB stores only references to User and Issue model , populate tells it to fetch the actual data from these refernces 
         // owner -> User model
         // issues -> Issue model
-        if (!repositories || repositories.length == 0) {
-            return res.status(404).send("Repos not Found");
-        }
 
         res.json({ message: "repositories found !", repositories });
 
@@ -107,15 +118,13 @@ async function fetchRepoByName(req, res) {
 
 
 async function fetchRepoForCurrentUser(req, res) {
-    const userId = req.user;
+    const userId = req.params.userId;
     try {
         if (!userId) {
             return res.status(400).send("userId not found");
         }
         const repositories = await Repository.find({ owner: userId }).populate("owner").populate("issues");
-        if (!repositories || repositories.length == 0) {
-            return res.status(404).send("Repositories not Found");
-        }
+
 
         res.json(repositories);
     } catch (err) {
@@ -169,19 +178,28 @@ async function updateRepositoryById(req, res) {
 
 async function deleteRepositoryById(req, res) {
     const repoId = req.params.id;
-    
+
     try {
         if (!repoId) {
             return res.status(400).send("Invalid RepoId");
         }
 
         const repository = await Repository.findByIdAndDelete(repoId);
+        // deleting the repo ref from user also 
+        await User.findByIdAndUpdate(
+            repository.owner,
+            {
+                $pull: {
+                    repository: repoId
+                }
+            }
+        );
         if (!repository) {
             return res.status(404)
                 .send("Repository Not Found");
         }
-    
-       
+
+
         res.json({
             message: "repository deleted successfully"
         });
@@ -197,7 +215,7 @@ async function deleteRepositoryById(req, res) {
 
 async function toggleVisibilityRepoById(req, res) {
     const repoId = req.params.id;
-    
+
     try {
         if (!repoId) {
             return res.status(400).send("Invalid RepoId");
@@ -208,7 +226,7 @@ async function toggleVisibilityRepoById(req, res) {
             return res.status(404)
                 .send("Repository Not Found");
         }
-        repository.visibility = ! repository.visibility ;
+        repository.visibility = !repository.visibility;
         const updatedRepo = await repository.save();
         res.json({
             message: "visibility changed",

@@ -18,10 +18,10 @@ async function getAllUsers(req, res) {
 }
 
 async function signup(req, res) {
-    const { username, password, email } = req.body;
+    const { userName, password, email } = req.body;
 
     try {
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ userName });
 
         if (user) {
             return res.status(400).json({ message: "User already exists" });
@@ -30,7 +30,7 @@ async function signup(req, res) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await User.create({
-            username,
+            userName,
             email,
             password: hashedPassword,
             repositories: [],
@@ -41,10 +41,13 @@ async function signup(req, res) {
         const token = jwt.sign(
             { id: newUser._id },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: "3h" }
+            { expiresIn: "7d" }
         );
 
-        res.json({ token });
+        res.json({
+            token,
+            userId: newUser._id
+        });
 
     } catch (err) {
         console.error("Error in SIGNUP : ", err.message);
@@ -71,7 +74,7 @@ async function login(req, res) {
         const token = jwt.sign(
             { id: user._id },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: "3h" }
+            { expiresIn: "7d" }
         );
 
         res.json({ token, userId: user._id });

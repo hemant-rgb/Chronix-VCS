@@ -1,16 +1,41 @@
 const fs = require("fs").promises;
 const path = require("path");
 
-
 const { resolveCommitId } = require("../utils/commitResolver");
-
 const { downloadRecursive } = require("../utils/downloadRecursive.js");
+
 async function pullRepo(commitId) {
   try {
-    commitId =
-      await resolveCommitId(
-        commitId
+
+    const repoPath = path.resolve(
+      process.cwd(),
+      ".chronix"
+    );
+
+    const configPath = path.join(
+      repoPath,
+      "config.json"
+    );
+
+    const config = JSON.parse(
+      await fs.readFile(
+        configPath,
+        "utf-8"
+      )
+    );
+
+    const repoId = config.repoId;
+
+    if (!repoId) {
+      console.log(
+        "Repository is not linked to a remote repository."
       );
+      return;
+    }
+
+    commitId = await resolveCommitId(
+      commitId
+    );
 
     if (!commitId) {
       console.log(
@@ -21,14 +46,14 @@ async function pullRepo(commitId) {
 
     const remoteFolder =
       path.posix.join(
+        repoId,
         "commits",
         commitId
       );
 
     const restorePath =
       path.join(
-        process.cwd(),
-        ".chronix",
+        repoPath,
         "pulled",
         commitId
       );
@@ -38,13 +63,20 @@ async function pullRepo(commitId) {
       restorePath
     );
 
-    console.log("Pull completed");
+    console.log(
+      `Pulled commit ${commitId}`
+    );
+
   } catch (err) {
+
     console.error(
       "Error pulling repository:",
       err.message
     );
+
   }
 }
 
-module.exports = { pullRepo };
+module.exports = {
+  pullRepo
+};

@@ -5,7 +5,7 @@ import React , {createContext,useState, useEffect,useContext} from 'react';
 const AuthContext = createContext();
 
 export const useAuth = ()=>{
-    return useContext(AuthContext)
+    return useContext(AuthContext)                         //tells about the state of user whether login or not
 }
 
 // Wrapper
@@ -22,5 +22,5 @@ export const AuthProvider = ({children})=>{
         currentUser, setCurrentUser
     }
 
-    return <AuthContext.Provider value = {value}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value = {value}>{children}</AuthContext.Provider>      // value is passed to all the children of AuthProvider
 }

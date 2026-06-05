@@ -18,6 +18,8 @@ const { pushRepo } = require("./controllers/push.js");
 const { addRepo } = require("./controllers/add.js");
 const { revertRepo } = require("./controllers/revert.js");
 const { logRepo } = require("./controllers/log.js");
+const { statusRepo } = require("./controllers/status.js");
+const { cloneRepo } = require("./controllers/clone.js");
 const mainRouter = require("./routes/main.router.js");
 
 dotenv.config();
@@ -25,6 +27,7 @@ dotenv.config();
 yargs(hideBin(process.argv))
     .command("start", "Server started", {}, startServer)
     .command("init", "Initialises a repository", {}, initRepo)
+    .command("status", "Status of staged and unstaged files", {}, statusRepo)
     .command("add <file>", "Add file to repository", (yargs) => {
         yargs.positional("file", {
             description: "add file to staging area",
@@ -60,6 +63,23 @@ yargs(hideBin(process.argv))
             pullRepo(argv.target);
         }
     )
+    .command(
+        "clone <repoId>",
+        "Clone repository",
+        (yargs) => {
+            yargs.positional(
+                "repoId",
+                {
+                    type: "string"
+                }
+            );
+        },
+        (argv) => {
+            cloneRepo(
+                argv.repoId
+            );
+        }
+    )
     .command("revert [target]",
         "Revert back to specific commit",
         (yargs) => {
@@ -77,32 +97,32 @@ yargs(hideBin(process.argv))
 function startServer() {
     const app = express();
     const port = process.env.PORT || 3000;
-  
+
     app.use(express.json());
 
     const mongoURI = process.env.MONGODB_URI;
     mongoose.connect(mongoURI)
-    .then(() => { console.log("connected to database") })
-    .catch((err) => { console.log("error in connecting to db:", err) });
-    
-    app.use(cors({ origin : "*" })); //allowing all domain to access
+        .then(() => { console.log("connected to database") })
+        .catch((err) => { console.log("error in connecting to db:", err) });
+
+    app.use(cors({ origin: "*" })); //allowing all domain to access
 
 
 
-    app.use("/",mainRouter);
+    app.use("/", mainRouter);
 
 
 
     const httpServer = http.createServer(app);
-    const io = new Server(httpServer,{         // socket allowing all to perform get and post requests
-        cors:{    
+    const io = new Server(httpServer, {         // socket allowing all to perform get and post requests
+        cors: {
             origin: "*",
-            methods : ["GET","POST"],
+            methods: ["GET", "POST"],
         },
     });
 
-    io.on("connection",(socket)=>{
-        socket.on("joinRoom",(userId)=>{           //user joining with userId
+    io.on("connection", (socket) => {
+        socket.on("joinRoom", (userId) => {           //user joining with userId
             const user = userId;
             console.log("====");
             console.log(user);
@@ -112,11 +132,11 @@ function startServer() {
     });
 
     const db = mongoose.connection;
-    db.once("open",async()=>{
+    db.once("open", async () => {
         console.log("CRUD");
     });
 
-    httpServer.listen(port,()=>{
+    httpServer.listen(port, () => {
         console.log(`listining to port ${port}`);
 
     })

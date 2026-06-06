@@ -33,9 +33,6 @@ async function signup(req, res) {
             userName,
             email,
             password: hashedPassword,
-            repositories: [],
-            followedUser: [],
-            starRepos: []
         });
 
         const token = jwt.sign(
@@ -51,7 +48,9 @@ async function signup(req, res) {
 
     } catch (err) {
         console.error("Error in SIGNUP : ", err.message);
-        res.status(500).send("Server Error !");
+        res.status(400).json({
+            message: err.message
+        });
     }
 }
 
@@ -81,7 +80,9 @@ async function login(req, res) {
 
     } catch (err) {
         console.error("Error during LOGIN : ", err.message);
-        res.status(500).send("Server Error !");
+        res.status(400).json({
+            message: err.message
+        });
     }
 }
 
@@ -89,7 +90,18 @@ async function getUserProfile(req, res) {
     const currId = req.params.id;
 
     try {
-        const user = await User.findById(currId);
+        const user = await User.findById(currId).populate(
+            "repository",
+            "name description visibility"
+        )
+            .populate(
+                "followers",
+                "userName"
+            )
+            .populate(
+                "following",
+                "userName"
+            );;
 
         if (!user) {
             return res.status(404).json({ message: "User Not Found" });
@@ -105,7 +117,19 @@ async function getUserProfile(req, res) {
 
 async function updateUserProfile(req, res) {
     const currId = req.params.id;
-    const { email, password } = req.body;
+    if (
+        req.user.id !== currId
+    ) {
+
+        return res
+            .status(403)
+            .json({
+                message:
+                    "Forbidden"
+            });
+
+    }
+    const { email, password, bio } = req.body;
 
     try {
         let updateField = {};
@@ -117,6 +141,9 @@ async function updateUserProfile(req, res) {
         if (password) {
             const hashedPassword = await bcrypt.hash(password, 10);
             updateField.password = hashedPassword;
+        }
+        if (bio !== undefined) {
+            updateField.bio = bio;
         }
 
         const result = await User.findByIdAndUpdate(
@@ -139,6 +166,18 @@ async function updateUserProfile(req, res) {
 
 async function deleteUserProfile(req, res) {
     const currId = req.params.id;
+    if (
+        req.user.id !== currId
+    ) {
+
+        return res
+            .status(403)
+            .json({
+                message:
+                    "Forbidden"
+            });
+
+    }
 
     try {
         const result = await User.findByIdAndDelete(currId);
@@ -155,6 +194,161 @@ async function deleteUserProfile(req, res) {
     }
 }
 
+async function followUser(
+    req,
+    res
+) {
+    const targetUserId =
+        req.params.id;
+
+    const {
+        currentUserId
+    } = req.body;
+
+    try {
+
+        const currentUser =
+            await User.findById(
+                currentUserId
+            );
+
+        const targetUser =
+            await User.findById(
+                targetUserId
+            );
+
+        if (
+            !currentUser ||
+            !targetUser
+        ) {
+
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "User not found"
+                });
+
+        }
+
+        if (
+            !currentUser
+                .following
+                .includes(
+                    targetUserId
+                )
+        ) {
+
+            currentUser
+                .following
+                .push(
+                    targetUserId
+                );
+
+            targetUser
+                .followers
+                .push(
+                    currentUserId
+                );
+
+            await currentUser
+                .save();
+
+            await targetUser
+                .save();
+        }
+
+        res.json({
+            message:
+                "Followed"
+        });
+
+    } catch (err) {
+
+        res.status(500)
+            .json({
+                message:
+                    err.message
+            });
+
+    }
+}
+async function unfollowUser(
+    req,
+    res
+) {
+
+    const targetUserId =
+        req.params.id;
+
+    const {
+        currentUserId
+    } = req.body;
+
+    try {
+
+        const currentUser =
+            await User.findById(
+                currentUserId
+            );
+
+        const targetUser =
+            await User.findById(
+                targetUserId
+            );
+
+        if (
+            !currentUser ||
+            !targetUser
+        ) {
+
+            return res
+                .status(404)
+                .json({
+                    message:
+                        "User not found"
+                });
+
+        }
+
+        currentUser.following =
+            currentUser.following.filter(
+                userId =>
+                    userId.toString()
+                    !== targetUserId
+            );
+
+        targetUser.followers =
+            targetUser.followers.filter(
+                userId =>
+                    userId.toString()
+                    !== currentUserId
+            );
+
+        await currentUser.save();
+
+        await targetUser.save();
+
+        res.json({
+            message:
+                "Unfollowed successfully"
+        });
+
+    } catch (err) {
+
+        console.error(
+            err.message
+        );
+
+        res.status(500)
+            .send(
+                "Server Error!"
+            );
+
+    }
+
+}
+
 module.exports = {
     getAllUsers,
     signup,
@@ -162,5 +356,7 @@ module.exports = {
     getUserProfile,
     updateUserProfile,
     deleteUserProfile,
+    followUser,
+    unfollowUser
 };
 

@@ -29,15 +29,7 @@ export default function UserProfileCard({ user }) {
                             <span>Following</span>
 
                             <span>
-                                {user?.followedUser?.length || 0}
-                            </span>
-                        </div>
-
-                        <div className="flex justify-between">
-                            <span>Starred</span>
-
-                            <span>
-                                {user?.starRepo?.length || 0}
+                                {user?.following?.length || 0}
                             </span>
                         </div>
                     </div>

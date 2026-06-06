@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+
 
 import Navbar from "../navbar/NavBar.jsx";
 
 import RepoSidebar from "./RepoSidebar.jsx";
 import ActivityPanel from "./ActivityPanel.jsx";
 import UserProfileCard from "./UserProfileCard.jsx";
+import api from "@/lib/api";
+
 
 const Dashboard = () => {
     const [repositories, setRepositories] = useState([]);
@@ -19,8 +21,8 @@ const Dashboard = () => {
             async () => {
                 try {
                     const response =
-                        await axios.get(
-                            `http://localhost:3000/repo/user/${userId}`
+                        await api.get(
+                            `/repo/user/${userId}`
                         );
 
                     setRepositories(
@@ -38,8 +40,8 @@ const Dashboard = () => {
             async () => {
                 try {
                     const response =
-                        await axios.get(
-                            `http://localhost:3000/getUserProfile/${userId}`
+                        await api.get(
+                            `/users/${userId}`
                         );
 
                     setUser(
@@ -83,11 +85,8 @@ const Dashboard = () => {
                 {/* Center */}
 
                 <div className="col-span-6">
-                    <ActivityPanel
-                        repositories={
-                            repositories
-                        }
-                    />
+                    <ActivityPanel/>
+                   
                 </div>
 
                 {/* Right Sidebar */}

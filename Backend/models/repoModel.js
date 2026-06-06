@@ -10,11 +10,11 @@ const RepositorySchema = new Schema({
     description : {
         type : String,
     },
-    content : [
-        {
-            type : String,
-        },
-    ],
+    // content : [
+    //     {
+    //         type : String,
+    //     },
+    // ],
     visibility : {
         type : Boolean,
     },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+
 
 import {
     Card,
@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
+
 
 export default function CreateRepository() {
     const navigate = useNavigate();
@@ -39,8 +41,8 @@ export default function CreateRepository() {
                         "userId"
                     );
 
-                await axios.post(
-                    "http://localhost:3000/repo/create",
+                await api.post(
+                    `/repo/create`,
                     {
                         owner,
                         name,

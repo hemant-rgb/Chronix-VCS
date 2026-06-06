@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import AuthLayout from "@/components/auth/AuthLayout";
+import api from "@/lib/api";
 
 import React, { useState } from "react";
-import axios from "axios";
+
 
 import { useAuth } from "../../AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,8 +31,8 @@ export default function Login() {
         try {
             setLoading(true);
 
-            const res = await axios.post(
-                "http://localhost:3000/login",
+            const res = await api.post(
+                `/login`,
                 {
                     email,
                     password,
@@ -80,25 +81,6 @@ export default function Login() {
                 </CardHeader>
 
                 <CardContent className="space-y-5">
-                    <Button
-                        variant="outline"
-                        className="w-full h-11"
-                    >
-                        Continue with Google
-                    </Button>
-
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t" />
-                        </div>
-
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-card px-2 text-muted-foreground">
-                                Or continue with email
-                            </span>
-                        </div>
-                    </div>
-
                     <div className="space-y-2">
                         <Label htmlFor="email">
                             Email

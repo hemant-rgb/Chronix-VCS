@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import axios from "axios";
+
 
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import api from "@/lib/api";
 
 export default function SearchBar() {
     const navigate = useNavigate();
@@ -17,8 +18,8 @@ export default function SearchBar() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get(
-                    "http://localhost:3000/allUsers"
+                const response = await api.get(
+                    `/users`
                 );
 
                 setUsers(response.data);

@@ -5,78 +5,68 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 
-export default function ActivityPanel({
-    repositories,
-}) {
+export default function ActivityPanel() {
+
+
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Repositories
-                        </CardTitle>
-                    </CardHeader>
-
-                    <CardContent>
-                        <p className="text-3xl font-bold">
-                            {repositories.length}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Commits
-                        </CardTitle>
-                    </CardHeader>
-
-                    <CardContent>
-                        <p className="text-3xl font-bold">
-                            0
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Stars
-                        </CardTitle>
-                    </CardHeader>
-
-                    <CardContent>
-                        <p className="text-3xl font-bold">
-                            0
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-
             <Card>
-                <CardHeader>
-                    <CardTitle>
-                        Activity Heatmap
-                    </CardTitle>
-                </CardHeader>
 
-                <CardContent>
-                    <div
-                        className="
-                            h-87.5
-                            rounded-lg
-                            border
-                            flex
-                            items-center
-                            justify-center
-                            text-muted-foreground
-                        "
-                    >
-                        Heatmap Coming Soon
+                <CardContent className="pt-6">
+
+                    <div className="space-y-4">
+
+                        <div>
+                            <h3 className="font-semibold text-lg">
+                                Chronix VCS
+                            </h3>
+
+                            <p className="text-sm text-muted-foreground">
+                                Custom distributed version control system
+                                with cloud-backed repository hosting and
+                                issue tracking.
+                            </p>
+                        </div>
+
+                        <div className="text-sm">
+                            <p className="font-medium mb-2">
+                                Core Features
+                            </p>
+
+                            <div className="grid grid-cols-2 gap-y-1">
+                                <span>✓ Repository Hosting</span>
+                                <span>✓ Commit Tracking</span>
+                                <span>✓ Push & Pull</span>
+                                <span>✓ Clone Support</span>
+                                <span>✓ Issue Tracking</span>
+                                <span>✓ User Profiles</span>
+                            </div>
+                        </div>
+
+                        <div className="text-sm">
+                            <p className="font-medium mb-1">
+                                Workflow
+                            </p>
+
+                            <code className="text-xs">
+                                init → add → commit → push
+                            </code>
+
+                            <br />
+
+                            <code className="text-xs">
+                                clone → pull → revert
+                            </code>
+                        </div>
+
                     </div>
+
                 </CardContent>
+
             </Card>
+
         </div>
     );
+
+
 }

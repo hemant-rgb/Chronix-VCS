@@ -4,7 +4,7 @@ const Repository = require("../models/repoModel.js");
 const Issue = require("../models/issueModel.js");
 
 async function createIssue(req, res) {
-    const { title, description, repository } = req.body;
+    const { title, description, repository, createdBy } = req.body;
 
     try {
         if (!title || !description) {
@@ -17,7 +17,10 @@ async function createIssue(req, res) {
                 .send("Invalid Repository Id !");
         }
 
-        const repo = await Repository.find(repository);
+        const repo =
+            await Repository.findById(
+                repository
+            );
 
         if (!repo) {
             return res.status(404)
@@ -27,7 +30,8 @@ async function createIssue(req, res) {
         const newIssue = new Issue({
             title,
             description,
-            repository
+            repository,
+            createdBy
         });
 
         const savedIssue = await newIssue.save();
@@ -51,10 +55,17 @@ async function createIssue(req, res) {
     }
 }
 
-async function getAllIssue(req, res) {
+async function getRepositoryIssues(req, res) {
     try {
         const issues = await Issue.find({})
-            .populate("repository");
+            .populate(
+                "repository",
+                "name"
+            )
+            .populate(
+                "createdBy",
+                "userName email"
+            );
 
         res.json(issues);
 
@@ -79,7 +90,14 @@ async function getIssueById(req, res) {
         }
 
         const issue = await Issue.findById(issueId)
-            .populate("repository");
+            .populate(
+                "repository",
+                "name"
+            )
+            .populate(
+                "createdBy",
+                "userName email"
+            );
 
         if (!issue) {
             return res.status(404)
@@ -114,6 +132,34 @@ async function updateIssueById(req, res) {
         if (!issue) {
             return res.status(404)
                 .send("Issue Not Found");
+        }
+        const repository =
+            await Repository.findById(
+                issue.repository
+            );
+
+        const isIssueCreator =
+            issue.createdBy.toString()
+            ===
+            req.user.id;
+
+        const isRepoOwner =
+            repository.owner.toString()
+            ===
+            req.user.id;
+
+        if (
+            !isIssueCreator &&
+            !isRepoOwner
+        ) {
+
+            return res
+                .status(403)
+                .json({
+                    message:
+                        "Forbidden"
+                });
+
         }
 
         if (title) {
@@ -165,6 +211,31 @@ async function deleteIssueById(req, res) {
         const repo = await Repository.findById(
             issue.repository
         );
+        
+
+        const isIssueCreator =
+            issue.createdBy.toString()
+            ===
+            req.user.id;
+
+        const isRepoOwner =
+            repo.owner.toString()
+            ===
+            req.user.id;
+
+        if (
+            !isIssueCreator &&
+            !isRepoOwner
+        ) {
+
+            return res
+                .status(403)
+                .json({
+                    message:
+                        "Forbidden"
+                });
+
+        }
 
         if (repo) {
             repo.issues =
@@ -195,7 +266,7 @@ async function deleteIssueById(req, res) {
 
 module.exports = {
     createIssue,
-    getAllIssue,
+    getRepositoryIssues,
     updateIssueById,
     deleteIssueById,
     getIssueById,

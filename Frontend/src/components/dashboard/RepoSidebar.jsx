@@ -3,9 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-// const supabase =
-//     require("../config/supabase-config");
-
 export default function RepoSidebar({
     repositories,
 }) {
@@ -57,7 +54,7 @@ export default function RepoSidebar({
                         (repo) => (
                             <Link
                                 key={repo._id}
-                                to={`/repo/${repo._id}`}
+                                to={`/repo/user/${repo._id}`}
                                 className="
                                     flex
                                     items-center

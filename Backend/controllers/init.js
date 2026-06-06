@@ -12,7 +12,7 @@ async function initRepo(remoteRepoId = null) {
 
     const headPath = path.join(repoPath, "HEAD");
     const currentPath = path.join(repoPath, "CURRENT");
-    const clonedPath = path.join(repoPath,"cloned");
+    // const clonedPath = path.join(repoPath,"cloned");
     try {
         // create .chronix folder structure
         await fs.mkdir(repoPath, { recursive: true });
@@ -20,7 +20,7 @@ async function initRepo(remoteRepoId = null) {
         await fs.mkdir(commitPath, { recursive: true });
 
         await fs.mkdir(pulledPath, { recursive: true });
-        await fs.mkdir(clonedPath,{ recursive: true });
+        // await fs.mkdir(clonedPath,{ recursive: true });
 
         // config file
         const repoName = path.basename(process.cwd());

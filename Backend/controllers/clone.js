@@ -1,5 +1,8 @@
 const fs = require("fs").promises;
 const path = require("path");
+const axios = require("axios");
+const API_URL =
+    process.env.API_URL;
 
 const supabase =
     require("../config/supabase-config");
@@ -14,15 +17,77 @@ async function cloneRepo(repoId) {
 
     try {
 
-        // create local chronix structure
-        await initRepo(repoId);
+        // Fetch repository metadata
+        const response =
+            await axios.get(
+                `${API_URL}/repo/${repoId}`
+            );
 
-        const repoPath = path.join(
-            process.cwd(),
-            ".chronix"
+        const repoName =
+            response.data.name;
+
+        // Create clones directory
+        const clonesDir =
+            path.join(
+                process.cwd(),
+                "clones"
+            );
+
+        await fs.mkdir(
+            clonesDir,
+            {
+                recursive: true
+            }
         );
 
-        // download remote HEAD
+        // Clone folder name
+        let cloneRoot =
+            path.join(
+                clonesDir,
+                repoName
+            );
+
+        // Handle duplicate names
+        try {
+
+            await fs.access(
+                cloneRoot
+            );
+
+            cloneRoot =
+                path.join(
+                    clonesDir,
+                    `${repoName}-${repoId.slice(0, 6)}`
+                );
+
+        } catch {
+            // Folder does not exist
+        }
+
+        await fs.mkdir(
+            cloneRoot,
+            {
+                recursive: true
+            }
+        );
+
+        // Move into cloned repository
+        process.chdir(
+            cloneRoot
+        );
+
+        // Create .chronix
+        await initRepo(
+            repoId
+        );
+
+        const repoPath =
+            path.join(
+                cloneRoot,
+                ".chronix"
+            );
+
+        // Download HEAD
         const { data, error } =
             await supabase.storage
                 .from("chronixBucket")
@@ -35,15 +100,29 @@ async function cloneRepo(repoId) {
         }
 
         const latestCommitId =
-            (await data.text()).trim();
+            (
+                await data.text()
+            ).trim();
 
+        // Empty repository
         if (!latestCommitId) {
-            throw new Error(
-                "Remote HEAD is empty."
+
+            console.log(
+                "Repository has no commits yet."
             );
+
+            console.log(
+                `Empty repository cloned at:`
+            );
+
+            console.log(
+                cloneRoot
+            );
+
+            return;
         }
 
-        // remote commit folder
+        // Remote latest commit
         const remoteFolder =
             path.posix.join(
                 repoId,
@@ -51,21 +130,27 @@ async function cloneRepo(repoId) {
                 latestCommitId
             );
 
-        // local clone folder
-        const clonePath =
+        // Workspace folder
+        const workspacePath =
             path.join(
-                repoPath,
-                "cloned",
-                repoId,
-                latestCommitId
+                cloneRoot,
+                "workspace"
             );
 
-        await downloadRecursive(
-            remoteFolder,
-            clonePath
+        await fs.mkdir(
+            workspacePath,
+            {
+                recursive: true
+            }
         );
 
-        // update local HEAD
+        // Download latest snapshot
+        await downloadRecursive(
+            remoteFolder,
+            workspacePath
+        );
+
+        // Update HEAD
         await fs.writeFile(
             path.join(
                 repoPath,
@@ -74,7 +159,7 @@ async function cloneRepo(repoId) {
             latestCommitId
         );
 
-        // update CURRENT
+        // Update CURRENT
         await fs.writeFile(
             path.join(
                 repoPath,
@@ -84,11 +169,15 @@ async function cloneRepo(repoId) {
         );
 
         console.log(
-            `Repository ${repoId} cloned successfully`
+            `Repository '${repoName}' cloned successfully`
         );
 
         console.log(
             `Latest commit: ${latestCommitId}`
+        );
+
+        console.log(
+            `Location: ${cloneRoot}`
         );
 
     } catch (err) {

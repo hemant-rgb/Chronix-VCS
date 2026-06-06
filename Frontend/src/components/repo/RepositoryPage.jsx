@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+
 
 import Navbar from "../navbar/NavBar.jsx";
+
 
 import {
     Card,
@@ -11,18 +12,31 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import FileTree from "./FileTree.jsx";
 
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api.js";
 
 export default function RepositoryPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [tree, setTree] = useState([]);
+    const [selectedFile, setSelectedFile] = useState("");
+    const [click, setClick] = useState(false);
 
-    const [repository, setRepository] =
-        useState(null);
+    const [fileContent, setFileContent] = useState("");
+    const [repository, setRepository] = useState(null);
+    const [commits, setCommits] = useState([]);
+    const [issues, setIssues] = useState([]);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [showIssueForm, setShowIssueForm] = useState(false);
+
+    const [issueTitle, setIssueTitle] = useState("");
+
+    const [issueDescription, setIssueDescription] = useState("");
+
+    const [loading, setLoading] = useState(true);
+
 
     useEffect(() => {
 
@@ -32,12 +46,41 @@ export default function RepositoryPage() {
                 try {
 
                     const response =
-                        await axios.get(
-                            `http://localhost:3000/repo/${id}`
+                        await api.get(
+                            `/repo/user/${id}`
                         );
 
                     setRepository(
                         response.data
+                    );
+
+
+
+                    const treeResponse =
+                        await api.get(
+                            `/repo/${id}/tree`
+                        );
+                    setTree(
+                        treeResponse.data.tree
+                    );
+
+
+                    const commitResponse =
+                        await api.get(
+                            `/repo/${id}/commits`
+                        );
+
+                    setCommits(
+                        commitResponse.data
+                    );
+
+                    const issueResponse =
+                        await api.get(
+                            `/repo/${id}/issues`
+                        );
+
+                    setIssues(
+                        issueResponse.data
                     );
 
                 } catch (err) {
@@ -70,11 +113,11 @@ export default function RepositoryPage() {
 
             try {
 
-                await axios.delete(
-                    `http://localhost:3000/repo/delete/${id}`
+                await api.delete(
+                    `/repo/delete/${id}`
                 );
 
-                navigate("/dashboard");
+                navigate("/");
 
             } catch (err) {
 
@@ -90,7 +133,7 @@ export default function RepositoryPage() {
         () => {
 
             navigator.clipboard.writeText(
-                `chronix clone ${repository._id}`
+                `${repository._id}`
             );
 
             alert(
@@ -121,6 +164,127 @@ export default function RepositoryPage() {
             </>
         );
     }
+    const handleFileClick =
+        async (path) => {
+
+            try {
+
+                console.log(
+                    "Clicked:",
+                    path
+                );
+
+                const response =
+                    await api.get(
+                        `/repo/${id}/file`,
+                        {
+                            params: {
+                                path
+                            }
+                        }
+                    );
+
+                setSelectedFile(
+                    path
+                );
+
+                setFileContent(
+                    response.data.content
+                );
+                setClick(!click);
+
+            } catch (err) {
+
+                console.error(
+                    "Error loading file:",
+                    err
+                );
+
+            }
+        };
+    const handleCreateIssue =
+        async () => {
+
+            try {
+
+                const userId =
+                    localStorage.getItem(
+                        "userId"
+                    );
+
+                const response =
+                    await api.post(
+                        `/repo/${id}/issues`,
+                        {
+                            title:
+                                issueTitle,
+
+                            description:
+                                issueDescription,
+
+                            repository:
+                                id,
+
+                            createdBy:
+                                userId
+                        }
+                    );
+
+                setIssues([
+                    response.data.issue,
+                    ...issues
+                ]);
+
+                setIssueTitle("");
+                setIssueDescription("");
+
+                setShowIssueForm(
+                    false
+                );
+
+            } catch (err) {
+
+                console.error(
+                    err
+                );
+
+            }
+        };
+    const handleCloseIssue =
+        async (issueId) => {
+
+            try {
+
+                await api.put(
+                    `/issues/${issueId}`,
+                    {
+                        status: "closed"
+                    }
+                );
+
+                setIssues(
+                    prev =>
+                        prev.map(
+                            issue =>
+                                issue._id === issueId
+                                    ? {
+                                        ...issue,
+                                        status:
+                                            "closed"
+                                    }
+                                    : issue
+                        )
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "Error closing issue:",
+                    err
+                );
+
+            }
+        };
 
     return (
         <>
@@ -222,7 +386,7 @@ export default function RepositoryPage() {
                             "
                         >
                             <code>
-                                chronix clone{" "}
+                                {" "}
                                 {
                                     repository._id
                                 }
@@ -245,94 +409,294 @@ export default function RepositoryPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>
-                            Repository Content
+                            Repository Files
                         </CardTitle>
                     </CardHeader>
 
                     <CardContent>
 
-                        {repository.content
-                            ?.length > 0 ? (
+                        <FileTree
+                            nodes={tree}
+                            onFileClick={
+                                handleFileClick
+                            }
+                        />
 
-                            <ul
-                                className="
-                                    list-disc
-                                    ml-5
-                                "
-                            >
-                                {repository.content.map(
-                                    (
-                                        item,
-                                        index
-                                    ) => (
-                                        <li
-                                            key={
-                                                index
-                                            }
-                                        >
-                                            {
-                                                item
-                                            }
-                                        </li>
-                                    )
-                                )}
-                            </ul>
+                    </CardContent>
+                </Card>
+                <Card>
+
+                    <CardHeader>
+
+                        <CardTitle>
+                            File Viewer
+                        </CardTitle>
+
+                        <CardDescription>
+                            {
+                                selectedFile ||
+                                "Select a file"
+                            }
+                        </CardDescription>
+
+                    </CardHeader>
+
+                    <CardContent>
+
+                        <pre
+                            className="
+                overflow-auto
+                bg-slate-900
+                text-white
+                p-4
+                rounded-lg
+                min-h-75
+            "
+                        >
+                            {
+                                fileContent ||
+                                (click == true ? "no content" : "Click a file to view its contents.")
+                            }
+                        </pre>
+
+                    </CardContent>
+
+                </Card>
+                {/* commit History */}
+                <Card>
+
+                    <CardHeader>
+
+                        <CardTitle>
+                            Commit History
+                        </CardTitle>
+
+                    </CardHeader>
+
+                    <CardContent>
+
+                        {commits.length === 0 ? (
+
+                            <p>
+                                No commits found.
+                            </p>
 
                         ) : (
 
-                            <p>
-                                No content
-                                available.
-                            </p>
+                            commits.map(
+                                (commit) => (
+
+                                    <div
+                                        key={
+                                            commit.commitId
+                                        }
+                                        className="
+                            border-b
+                            py-3
+                        "
+                                    >
+
+                                        <h4
+                                            className="
+                                font-semibold
+                            "
+                                        >
+                                            {
+                                                commit.message
+                                            }
+                                        </h4>
+
+                                        <p
+                                            className="
+                                text-sm
+                                text-gray-500
+                            "
+                                        >
+                                            {
+                                                new Date(
+                                                    commit.date
+                                                ).toLocaleString(
+                                                    "en-IN",
+                                                    {
+                                                        day: "numeric",
+                                                        month: "short",
+                                                        year: "numeric",
+                                                        hour: "2-digit",
+                                                        minute: "2-digit",
+                                                    }
+                                                )
+                                            }
+                                        </p>
+
+                                        <code
+                                            className="
+                                text-xs
+                            "
+                                        >
+                                            {
+                                                commit.commitId.slice(
+                                                    0,
+                                                    8
+                                                )
+                                            }
+                                        </code>
+
+                                    </div>
+
+                                )
+                            )
 
                         )}
 
                     </CardContent>
+
                 </Card>
 
                 {/* Issues */}
 
+
+
+
                 <Card>
                     <CardHeader>
-                        <CardTitle>
-                            Issues
-                        </CardTitle>
+                        <div
+                            className="flex justify-between items-center">
+
+                            <CardTitle>
+                                Issues
+                            </CardTitle>
+
+                            <Button
+                                onClick={() =>
+                                    setShowIssueForm(
+                                        !showIssueForm
+                                    )
+                                }
+                            >
+                                + New Issue
+                            </Button>
+
+                        </div>
+
                     </CardHeader>
+                    {
+                        showIssueForm && (
+
+                            <div
+                                className=" mb-6 space-y-3 ">
+
+                                <input
+                                    type="text"
+                                    placeholder="Issue Title"
+                                    value={issueTitle}
+                                    onChange={(e) =>
+                                        setIssueTitle(
+                                            e.target.value
+                                        )
+                                    }
+                                    className=" w-full border p-2 rounded" />
+
+                                <textarea
+                                    placeholder="Issue Description"
+                                    value={
+                                        issueDescription
+                                    }
+                                    onChange={(e) =>
+                                        setIssueDescription(
+                                            e.target.value
+                                        )
+                                    }
+                                    className="w-full border p-2 rounded" />
+
+                                <Button
+                                    onClick={
+                                        handleCreateIssue
+                                    }
+                                >
+                                    Create Issue
+                                </Button>
+
+                            </div>
+
+                        )}
 
                     <CardContent>
 
-                        {repository.issues
-                            ?.length > 0 ? (
+                        {
+                            issues.length > 0 ? (
 
-                            repository.issues.map(
-                                (
-                                    issue
-                                ) => (
-                                    <div
-                                        key={
-                                            issue._id
-                                        }
-                                    >
-                                        {
-                                            issue.title
-                                        }
-                                    </div>
+                                issues.map(
+                                    (issue) => (
+
+                                        <div
+                                            key={issue._id}
+                                            className="border-b py-4 ">
+
+                                            <h4
+                                                className=" font-semibold ">
+                                                {issue.title}
+                                            </h4>
+
+                                            <p>
+                                                {
+                                                    issue.description
+                                                }
+                                            </p>
+
+                                            <p
+                                                className=" text-sm text-gray-500 ">
+                                                Opened by{" "}
+                                                {
+                                                    issue.createdBy
+                                                        ?.userName
+                                                }
+                                            </p>
+
+                                            <p
+                                                className=" text-sm ">
+                                                Status:
+                                                {" "}
+                                                {issue.status}
+                                            </p>
+                                            
+                                            {  
+                                                issue.status === "open" && (
+                                                    <Button
+                                                        
+                                                        onClick={() =>
+                                                            handleCloseIssue(
+                                                                issue._id
+                                                            )
+                                                        }
+                                                    >
+                                                        Close Issue
+                                                    </Button>
+                                                )
+                                            }
+
+                                        </div>
+
+                                    )
                                 )
+
+                            ) : (
+
+                                <p>
+                                    No issues yet.
+                                </p>
+
                             )
-
-                        ) : (
-
-                            <p>
-                                No issues
-                                created yet.
-                            </p>
-
-                        )}
+                        }
 
                     </CardContent>
                 </Card>
 
-                {/* Danger Zone */}
+
+
+
+
+
+                {/* Delete Button */}
 
                 <Card
                     className="

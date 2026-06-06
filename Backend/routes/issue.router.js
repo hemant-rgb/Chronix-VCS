@@ -2,12 +2,13 @@ const express = require("express");
 const issueController = require("../controllers/issueController.js");
 
 const issueRouter = express.Router();
+const authMiddleware = require("../middleware/authMiddleware.js");
 
 
-issueRouter.post("/issue/create",issueController.createIssue);
-issueRouter.get("/issue/all",issueController.getAllIssue);
-issueRouter.get("/issue/:id",issueController.getIssueById);
-issueRouter.put("/issue/update/:id",issueController.updateIssueById);
-issueRouter.delete("/issue/delete/:id",issueController.deleteIssueById);
+issueRouter.post("/repo/:repoId/issues",authMiddleware,issueController.createIssue);
+issueRouter.get("/repo/:repoId/issues",issueController.getRepositoryIssues);
+issueRouter.get("/issues/:id",issueController.getIssueById);
+issueRouter.put("/issues/:id",authMiddleware,issueController.updateIssueById);
+issueRouter.delete("/issues/:id",authMiddleware,issueController.deleteIssueById);
 
 module.exports = issueRouter;

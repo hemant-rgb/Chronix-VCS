@@ -11,7 +11,7 @@ const supabase =
 
 
 async function createRepository(req, res) {
-    const { owner, name, issues, content, description, visibility } = req.body;
+    const { owner, name, issues, description, visibility } = req.body;
 
     try {
         if (!name) {
@@ -24,7 +24,6 @@ async function createRepository(req, res) {
             name,
             description,
             owner,
-            content,
             visibility,
             issues,
         });
@@ -85,6 +84,20 @@ async function fetchRepoById(req, res) {
             return res.status(404)
                 .send("Repository Not Found");
         }
+        if (
+            !repo.visibility &&
+            repo.owner.toString()
+            !== req.user?.id
+        ) {
+
+            return res
+                .status(403)
+                .json({
+                    message:
+                        "Private Repository"
+                });
+
+        }
         res.json(repo);
     } catch (err) {
         console.error("Error during fetching of Repository by Id : ", err.message);
@@ -139,7 +152,7 @@ async function fetchRepoForCurrentUser(req, res) {
 
 async function updateRepositoryById(req, res) {
     const repoId = req.params.id;
-    const { content, description } = req.body;
+    const { description } = req.body;
     try {
         if (!repoId) {
             return res.status(400).send("Invalid RepoId");
@@ -150,9 +163,19 @@ async function updateRepositoryById(req, res) {
             return res.status(404)
                 .send("Repository Not Found");
         }
-        // adding new content
-        if (content) {
-            repository.content.push(content);
+        if (
+            repository.owner.toString()
+            !==
+            req.user.id
+        ) {
+
+            return res
+                .status(403)
+                .json({
+                    message:
+                        "Forbidden"
+                });
+
         }
 
         //over write the old description
@@ -184,7 +207,39 @@ async function deleteRepositoryById(req, res) {
             return res.status(400).send("Invalid RepoId");
         }
 
-        const repository = await Repository.findByIdAndDelete(repoId);
+
+        const repository =
+            await Repository.findById(
+                repoId
+            );
+
+        if (!repository) {
+
+            return res.status(404)
+                .send(
+                    "Repository Not Found"
+                );
+
+        }
+
+
+        if (
+            repository.owner.toString()
+            !==
+            req.user.id
+        ) {
+
+            return res
+                .status(403)
+                .json({
+                    message:
+                        "Forbidden"
+                });
+
+        }
+        await Repository.findByIdAndDelete(
+            repoId
+        );
         // deleting the repo ref from user also 
         await User.findByIdAndUpdate(
             repository.owner,

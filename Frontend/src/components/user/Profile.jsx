@@ -448,7 +448,7 @@ export default function UserProfile() {
                                             "
                                             onClick={() =>
                                                 navigate(
-                                                    `/repo/user/${repo._id}`
+                                                    `/repo/${repo._id}`
                                                 )
                                             }
                                         >

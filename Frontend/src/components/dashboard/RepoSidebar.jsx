@@ -54,7 +54,7 @@ export default function RepoSidebar({
                         (repo) => (
                             <Link
                                 key={repo._id}
-                                to={`/repo/user/${repo._id}`}
+                                to={`/repo/${repo._id}`}
                                 className="
                                     flex
                                     items-center

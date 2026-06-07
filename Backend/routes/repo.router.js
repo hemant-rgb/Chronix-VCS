@@ -10,11 +10,11 @@ const repoRouter = express.Router();
 
 repoRouter.post("/repo/create",authMiddleware, repoController.createRepository);
 repoRouter.get("/repo/all",repoController.getAllRepository);
-repoRouter.get("/repo/user/:id",repoController.fetchRepoById);
+repoRouter.get("/repo/:id",repoController.fetchRepoById);
 repoRouter.get("/repo/name/:name",repoController.fetchRepoByName);
 repoRouter.get("/repo/user/:userId",authMiddleware,repoController.fetchRepoForCurrentUser);
-repoRouter.put("/repo/update/:id",repoController.updateRepositoryById);
-repoRouter.delete("/repo/delete/:id",repoController.deleteRepositoryById);
+repoRouter.put("/repo/update/:id",authMiddleware,repoController.updateRepositoryById);
+repoRouter.delete("/repo/delete/:id",authMiddleware,repoController.deleteRepositoryById);
 repoRouter.get("/repo/user/:id/tree",authMiddleware,getRepositoryTree);
 repoRouter.get("/repo/user/:id/file",authMiddleware,getRepositoryFile);
 repoRouter.get("/repo/user/:id/commits",authMiddleware,getRepositoryCommits);

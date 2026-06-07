@@ -22,13 +22,26 @@ async function addRepo(filePath) {
         const absolutePath =
             path.resolve(filePath);
 
-        const itemName =
-            path.basename(absolutePath);
+        const relativePath =
+            path.relative(
+                process.cwd(),
+                absolutePath
+            );
+        if (
+            relativePath.startsWith("..")
+        ) {
+
+            console.log(
+                "Cannot add files outside repository"
+            );
+
+            return;
+        }
 
         const destination =
             path.join(
                 stagePath,
-                itemName
+                relativePath
             );
 
         await copyRecursive(
@@ -37,7 +50,7 @@ async function addRepo(filePath) {
         );
 
         console.log(
-            `${itemName} added to staging area!`
+            `${relativePath} added to staging area!`
         );
 
     } catch (err) {

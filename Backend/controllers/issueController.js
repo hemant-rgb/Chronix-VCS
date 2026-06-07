@@ -57,7 +57,8 @@ async function createIssue(req, res) {
 
 async function getRepositoryIssues(req, res) {
     try {
-        const issues = await Issue.find({})
+        const repoId = req.params.repoId;
+        const issues = await Issue.find({repository : repoId})
             .populate(
                 "repository",
                 "name"

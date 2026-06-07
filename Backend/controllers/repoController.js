@@ -84,20 +84,20 @@ async function fetchRepoById(req, res) {
             return res.status(404)
                 .send("Repository Not Found");
         }
-        if (
-            !repo.visibility &&
-            repo.owner.toString()
-            !== req.user?.id
-        ) {
+        // if (
+        //     !repo.visibility &&
+        //     repo.owner.toString()
+        //     !== req.user?.id
+        // ) {
 
-            return res
-                .status(403)
-                .json({
-                    message:
-                        "Private Repository"
-                });
+        //     return res
+        //         .status(403)
+        //         .json({
+        //             message:
+        //                 "Private Repository"
+        //         });
 
-        }
+        // }
         res.json(repo);
     } catch (err) {
         console.error("Error during fetching of Repository by Id : ", err.message);

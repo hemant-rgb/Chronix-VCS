@@ -36,6 +36,7 @@ export default function RepositoryPage() {
     const [issueDescription, setIssueDescription] = useState("");
 
     const [loading, setLoading] = useState(true);
+    
 
 
     useEffect(() => {
@@ -47,7 +48,7 @@ export default function RepositoryPage() {
 
                     const response =
                         await api.get(
-                            `/repo/user/${id}`
+                            `/repo/${id}`
                         );
 
                     setRepository(
@@ -58,7 +59,7 @@ export default function RepositoryPage() {
 
                     const treeResponse =
                         await api.get(
-                            `/repo/${id}/tree`
+                            `/repo/user/${id}/tree`
                         );
                     setTree(
                         treeResponse.data.tree
@@ -67,7 +68,7 @@ export default function RepositoryPage() {
 
                     const commitResponse =
                         await api.get(
-                            `/repo/${id}/commits`
+                            `/repo/user/${id}/commits`
                         );
 
                     setCommits(
@@ -164,6 +165,12 @@ export default function RepositoryPage() {
             </>
         );
     }
+    const currentUserId =
+        localStorage.getItem("userId");
+
+    const isOwner =
+        repository.owner?._id ===
+        currentUserId;
     const handleFileClick =
         async (path) => {
 
@@ -176,7 +183,7 @@ export default function RepositoryPage() {
 
                 const response =
                     await api.get(
-                        `/repo/${id}/file`,
+                        `/repo/user/${id}/file`,
                         {
                             params: {
                                 path
@@ -230,9 +237,9 @@ export default function RepositoryPage() {
                         }
                     );
 
-                setIssues([
+                setIssues(prev => [
                     response.data.issue,
-                    ...issues
+                    ...prev
                 ]);
 
                 setIssueTitle("");
@@ -455,7 +462,7 @@ export default function RepositoryPage() {
                         >
                             {
                                 fileContent ||
-                                (click == true ? "no content" : "Click a file to view its contents.")
+                                (click === true ? "no content" : "Click a file to view its contents.")
                             }
                         </pre>
 
@@ -658,11 +665,11 @@ export default function RepositoryPage() {
                                                 {" "}
                                                 {issue.status}
                                             </p>
-                                            
-                                            {  
+
+                                            {
                                                 issue.status === "open" && (
                                                     <Button
-                                                        
+
                                                         onClick={() =>
                                                             handleCloseIssue(
                                                                 issue._id
@@ -719,14 +726,16 @@ export default function RepositoryPage() {
 
                     <CardContent>
 
-                        <Button
-                            variant="destructive"
-                            onClick={
-                                handleDelete
-                            }
-                        >
-                            Delete Repository
-                        </Button>
+                        {
+                            isOwner && (
+                                <Button
+                                    variant="destructive"
+                                    onClick={handleDelete}
+                                >
+                                    Delete Repository
+                                </Button>
+                            )
+                        }
 
                     </CardContent>
                 </Card>

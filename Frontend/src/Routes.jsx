@@ -52,7 +52,7 @@ const ProjectRoutes = ()=>{
             path:"/repo/create",
             element:<CreateRepository/>
         },{
-            path:"/repo/user/:id",
+            path:"/repo/:id",
             element : <RepositoryPage/>
         }
        

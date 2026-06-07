@@ -1,8 +1,8 @@
 const fs = require("fs").promises;
 const path = require("path");
 const axios = require("axios");
-const API_URL =
-    process.env.API_URL;
+const { API_URL } =
+    require("../config/client-config");
 
 const supabase =
     require("../config/supabase-config");
@@ -13,7 +13,16 @@ const { initRepo } =
 const { downloadRecursive } =
     require("../utils/downloadRecursive.js");
 
+const { requireAuth } = require("../utils/requireAuth.js");
+
 async function cloneRepo(repoId) {
+    // CLI authentication 
+    const auth =
+        await requireAuth();
+
+    if (!auth) {
+        return;
+    }
 
     try {
 
@@ -178,6 +187,20 @@ async function cloneRepo(repoId) {
 
         console.log(
             `Location: ${cloneRoot}`
+        );
+
+        console.log("\nNext steps:");
+
+        console.log(
+            `cd "${cloneRoot}"`
+        );
+
+        console.log(
+            "chronix status"
+        );
+
+        console.log(
+            "Start working inside the cloned repository."
         );
 
     } catch (err) {

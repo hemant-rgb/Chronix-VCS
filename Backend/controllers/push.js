@@ -3,8 +3,18 @@ const path = require("path");
 
 
 const { uploadRecursive } = require("../utils/uploadRecursive.js");
+const { requireAuth } = require("../utils/requireAuth.js");
 
 async function pushRepo() {
+
+
+  // CLI authentication 
+  const auth =
+    await requireAuth();
+
+  if (!auth) {
+    return;
+  }
   const repoPath = path.resolve(process.cwd(), ".chronix");
   const commitsPath = path.join(repoPath, "commits");
   const configPath = path.join(

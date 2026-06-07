@@ -3,8 +3,17 @@ const path = require("path");
 
 const { resolveCommitId } = require("../utils/commitResolver");
 const { downloadRecursive } = require("../utils/downloadRecursive.js");
+const { requireAuth } = require("../utils/requireAuth.js");
 
 async function pullRepo(commitId) {
+
+  // CLI authentication 
+  const auth =
+    await requireAuth();
+
+  if (!auth) {
+    return;
+  }
   try {
 
     const repoPath = path.resolve(
